@@ -1,1 +1,3 @@
 # Robotp
+
+Python is a perfect robot for administration tasks. I write tasks here to see how perfect he is ...
