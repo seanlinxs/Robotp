@@ -6,10 +6,26 @@ import argparse
 
 def get_databases(url):
     req = requests.get("{0}/_all_dbs".format(url))
-    return req.json()
+    return [db for db in req.json() if not db.startswith("_")]
 
+
+def replicate(db, src, dst):
+    print("Replicating {0}".format(db))
+    headers = { "Content-Type": "application/json" }
+    data = {
+        "source": "{0}/{1}".format(src, db),
+        "target": "{0}/{1}".format(dst, db),
+        "create_target": True
+    }
+
+    r = requests.post("{0}/_replicate".format(dst), json.dumps(data), headers=headers).json()
+
+    if "error" in r:
+        print("{0}: {1}".format(r["error"], r["reason"]))
+
+    
 parser = argparse.ArgumentParser(description="back up couch databases, default back up all databases except for _replicator and _user")
-parser.add_argument("-b", "--databases", metavar="db", nargs="+", help="the databases to be backed up")
+parser.add_argument("-b", "--databases", nargs="+", help="the databases to be backed up")
 parser.add_argument("source", help="source couchdb url, specify credentials if authentication is required, e.g http://admin:123@127.0.0.1:5984")
 parser.add_argument("destination", help="destination couchdb url, specify credentials if authentication is required, e.g http://admin:123@127.0.0.1:5984")
 
@@ -18,8 +34,18 @@ args = parser.parse_args()
 src = args.source
 dst = args.destination
 
-dbs = args.databases or get_databases(src, args.susername, args.spassword)
+dbs = args.databases or get_databases(src)
 
-print(dbs)
+answer = input("The following databases will be replicated from {0} to {1}:\n{2}\nDo you want to continue? [y/N] ".format(src, dst, ", ".join(dbs)))
 
-sys.exit(0)
+if answer == "y" or answer == "Y":
+    for db in dbs:
+        try:
+            replicate(db, src, dst)
+        except Exception as e:
+            print(e)
+        except KeyboardInterrupt:
+            print()
+            sys.exit(1)
+elif answer == "n" or answer == "N":
+    sys.exit(0)
