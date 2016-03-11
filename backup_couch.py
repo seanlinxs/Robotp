@@ -5,12 +5,16 @@ import argparse
 
 
 def get_databases(url):
-    req = requests.get("{0}/_all_dbs".format(url))
-    return [db for db in req.json() if not db.startswith("_")]
+    r = requests.get("{0}/_all_dbs".format(url))
+
+    if "error" in r:
+        print("{0}: {1}".format(r["error"], r["reason"]))
+        sys.exit(0)
+    else:
+        return [db for db in req.json() if not db.startswith("_")]
 
 
 def replicate(db, src, dst):
-    print("Replicating {0}".format(db))
     headers = { "Content-Type": "application/json" }
     data = {
         "source": "{0}/{1}".format(src, db),
@@ -22,6 +26,8 @@ def replicate(db, src, dst):
 
     if "error" in r:
         print("{0}: {1}".format(r["error"], r["reason"]))
+    else:
+        print("{0} has been replicated".format(db))
 
     
 parser = argparse.ArgumentParser(description="back up couch databases, default back up all databases except for _replicator and _user")
@@ -36,7 +42,8 @@ dst = args.destination
 
 dbs = args.databases or get_databases(src)
 
-answer = input("The following databases will be replicated from {0} to {1}:\n{2}\nDo you want to continue? [y/N] ".format(src, dst, ", ".join(dbs)))
+print("The following databases will be replicated from {0} to {1}:\n{2}\n".format(src, dst, " ".join(dbs)))
+answer = input("Do you want to continue? [y/N] ")
 
 if answer == "y" or answer == "Y":
     for db in dbs:
