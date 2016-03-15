@@ -5,7 +5,11 @@ import argparse
 
 
 def get_databases(url):
-    r = requests.get("{0}/_all_dbs".format(url)).json()
+    try:
+        r = requests.get("{0}/_all_dbs".format(url)).json()
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
     if "error" in r:
         print("{0}: {1}".format(r["error"], r["reason"]))

@@ -11,7 +11,7 @@ def get_databases(url):
         print("{0}: {1}".format(r["error"], r["reason"]))
         sys.exit(0)
     else:
-        return [db for db in req.json() if not db.startswith("_")]
+        return [db for db in r.json() if not db.startswith("_")]
 
 
 def replicate(db, src, dst):
@@ -30,7 +30,7 @@ def replicate(db, src, dst):
         print("{0} has been replicated".format(db))
 
     
-parser = argparse.ArgumentParser(description="back up couch databases, default back up all databases except for _replicator and _user")
+parser = argparse.ArgumentParser(description="back up couch databases, default back up all databases except for _replicator and _users, please note that this robot always do pull replication from destination host, so make sure both source and destination urls make sense for backup, e.g. if you are currently on host 192.168.133.129, you want to backup databases from http://localhost:5984 to http://192.168.133.128:5984, you might run backup_couch.py http://127.0.0.1:5984 http://192.168.133.128:5984, but this won't work as expected! Because this robot always run pull operation on destination host, so 127.0.0.1 is same machine as 192.168.133.128. To work correctly, use backup_couch.py http://192.168.133.129:5984 http://192.168.133.128:5984 for this situation")
 parser.add_argument("-b", "--databases", nargs="+", help="the databases to be backed up")
 parser.add_argument("source", help="source couchdb url, specify credentials if authentication is required, e.g http://admin:123@127.0.0.1:5984")
 parser.add_argument("destination", help="destination couchdb url, specify credentials if authentication is required, e.g http://admin:123@127.0.0.1:5984")
