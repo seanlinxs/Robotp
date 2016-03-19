@@ -22,7 +22,7 @@ def replicate(db, src, dst):
         "create_target": True
     }
 
-    r = requests.post("{0}/_replicate".format(dst), json.dumps(data), headers=headers).json()
+    r = requests.post("{0}/_replicate".format(src), json.dumps(data), headers=headers).json()
 
     if "error" in r:
         print("{0}: {1}".format(r["error"], r["reason"]))
