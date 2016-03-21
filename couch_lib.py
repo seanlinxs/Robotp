@@ -43,3 +43,17 @@ def delete_database(base_url, database):
         print("{0} has been deleted".format(database))
 
 
+def replicate(db, src, dst, push):
+    headers = { "Content-Type": "application/json" }
+    data = {
+        "source": "{0}/{1}".format(src, db),
+        "target": "{0}/{1}".format(dst, db),
+        "create_target": True
+    }
+
+    r = requests.post("{0}/_replicate".format(src if push else dst), json.dumps(data), headers=headers).json()
+
+    if "error" in r:
+        print("{0}: {1}".format(r["error"], r["reason"]))
+    else:
+        print("{0} has been replicated".format(db))
