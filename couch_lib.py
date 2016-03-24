@@ -2,6 +2,12 @@ import json
 import requests
 
 
+def delete(base_url, database, doc_id, rev):
+    url = "{0}/{1}/{2}?rev={3}".format(base_url, database, doc_id, rev)
+    r = requests.delete(url).json()
+    print(r)
+
+
 def purge(base_url, database, doc_id, revs):
     url = "{0}/{1}/_purge".format(base_url, database)
     data = { doc_id: revs }
@@ -11,6 +17,15 @@ def purge(base_url, database, doc_id, revs):
 
 
 def get_replications(base_url):
+    r = requests.get("{0}/_replicator/_all_docs".format(base_url)).json()
+
+    if "error" in r:
+        print("{0}: {1}".format(r["error"], r["reason"]))
+        sys.exit(0)
+    else:
+        return r["rows"]
+
+def get_replication_changes(base_url):
     r = requests.get("{0}/_replicator/_changes".format(base_url)).json()
 
     if "error" in r:
