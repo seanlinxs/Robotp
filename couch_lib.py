@@ -72,3 +72,42 @@ def replicate(db, src, dst, push):
         print("{0}: {1}".format(r["error"], r["reason"]))
     else:
         print("{0} has been replicated".format(db))
+
+def db_exists(base_url, db):
+    r = requests.head("{0}/{1}".format(base_url, db))
+
+    return r.status_code == 200
+
+def live_replicate(db, src, dst):
+    headers = { "Content-Type": "application/json" }
+    data = {
+        "source": "{0}/{1}".format(src, db),
+        "target": "{0}/{1}".format(dst, db),
+        "create_target": True,
+        "continuous": True
+    }
+
+    r = requests.post("{0}/_replicate".format(src), json.dumps(data), headers=headers).json()
+
+    if "error" in r:
+        raise Exception(("{0}: {1}".format(r["error"], r["reason"])))
+
+        
+def mirror(db, node1, node2):
+    db_exists_in_node1 = db_exists(node1, db)
+    db_exists_in_node2 = db_exists(node2, db)
+
+    if not db_exists_in_node1 and not db_exists_in_node2:
+        print("Cannot mirror, {0} not found".format(db))
+        return
+        
+    try:
+        if db_exists_in_node1:
+            live_replicate(db, node1, node2)
+            live_replicate(db, node2, node1)
+        else:
+            live_replicate(db, node2, node1)
+            live_replicate(db, node1, node2)
+        print("Live replications {0}/{1} <-> {2}/{1} have been created".format(node1, db, node2))
+    except Exception as e:
+        print(e)
