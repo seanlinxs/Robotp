@@ -48,6 +48,20 @@ def get_databases(base_url):
         return [db for db in r if not db.startswith("_")]
 
 
+def get_all_databases(base_url):
+    try:
+        r = requests.get("{0}/_all_dbs".format(base_url)).json()
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+    if "error" in r:
+        print("{0}: {1}".format(r["error"], r["reason"]))
+        sys.exit(0)
+    else:
+        return r
+
+
 def delete_database(base_url, database):
     headers = { "Content-Type": "application/json" }
     r = requests.delete("{0}/{1}".format(base_url, database), headers=headers).json()
@@ -109,5 +123,41 @@ def mirror(db, node1, node2):
             live_replicate(db, node2, node1)
             live_replicate(db, node1, node2)
         print("Live replications {0}/{1} <-> {2}/{1} have been created".format(node1, db, node2))
+    except Exception as e:
+        print(e)
+
+
+def cancel_live_replicate(db, src, dst):
+    headers = { "Content-Type": "application/json" }
+    data = {
+        "source": "{0}/{1}".format(src, db),
+        "target": "{0}/{1}".format(dst, db),
+        "create_target": True,
+        "continuous": True,
+        "cancel": True
+    }
+
+    r = requests.post("{0}/_replicate".format(src), json.dumps(data), headers=headers).json()
+
+    if "error" in r:
+        raise Exception(("{0}: {1}".format(r["error"], r["reason"])))
+
+        
+def cancel_mirror(db, node1, node2):
+    db_exists_in_node1 = db_exists(node1, db)
+    db_exists_in_node2 = db_exists(node2, db)
+
+    if not db_exists_in_node1 and not db_exists_in_node2:
+        print("Cannot cancel mirror, {0} not found".format(db))
+        return
+        
+    try:
+        if db_exists_in_node1:
+            cancel_live_replicate(db, node1, node2)
+            cancel_live_replicate(db, node2, node1)
+        else:
+            cancel_live_replicate(db, node2, node1)
+            cancel_live_replicate(db, node1, node2)
+        print("Live replications {0}/{1} <-> {2}/{1} have been canceled".format(node1, db, node2))
     except Exception as e:
         print(e)
