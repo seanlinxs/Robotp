@@ -5,7 +5,7 @@ import pycouchdb
 from urllib.parse import urlparse
 
 
-parser = argparse.ArgumentParser(description="continuously replicate database(s)")
+parser = argparse.ArgumentParser(description="replicate database(s)")
 parser.add_argument("source", help="source couchdb server base_url, can contain auth data like: http://admin:123456@localhost:5984")
 parser.add_argument("destination", help="destination couchdb server base_url, can contain auth data like: http://admin:123456@localhost:5984")
 parser.add_argument("-d", "--databases", nargs="+", help="databases to be replicated, all databases if not specified")
@@ -53,7 +53,7 @@ if not assumeyes:
 if assumeyes or answer == "y" or answer == "Y":
     for db in dbs:
         try:
-            src_server.replicate("{0}/{1}".format(src, db), "{0}/{1}".format(dst, db), continuous=True, create_target=True)
+            src_server.replicate("{0}/{1}".format(src, db), "{0}/{1}".format(dst, db), continuous=False, create_target=True)
             print(db)
         except Exception as e:
             print(e)
